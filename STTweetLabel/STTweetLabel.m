@@ -189,7 +189,12 @@
     htmlString = [htmlString stringByReplacingOccurrencesOfString:@"&#039;"  withString:@"'"];
     
     // Newline character (if you have a better idea...)
-    htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\n"  withString:@">newLine"];
+    //first CR LF
+    htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\r\n"  withString:@" >newLine"];
+    //LF
+    htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\n"  withString:@" >newLine"];
+    //CR
+    htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\r"  withString:@" >newLine"];
    
     // Extras
     htmlString = [htmlString stringByReplacingOccurrencesOfString:@"<3" withString:@"♥"];
