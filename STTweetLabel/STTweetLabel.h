@@ -21,6 +21,8 @@
 {
     NSMutableArray *touchLocations;
     NSMutableArray *touchWords;
+    NSMutableArray *substringsFromString;
+    NSMutableArray *widthOfSubstringsFromString;
 }
 
 @property (nonatomic, strong) UIFont *fontLink;

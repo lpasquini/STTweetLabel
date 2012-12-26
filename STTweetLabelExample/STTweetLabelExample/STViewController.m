@@ -29,12 +29,15 @@
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
 
-    _tweetLabel = [[STTweetLabel alloc] initWithFrame:CGRectMake(20.0, 60.0, 280.0, 200.0)];
+    _tweetLabel = [[STTweetLabel alloc] initWithFrame:CGRectMake(20.0, 60.0, 280.0, 300.0)];
     
     [_tweetLabel setFont:[UIFont fontWithName:@"HelveticaNeue" size:17.0]];
     [_tweetLabel setTextColor:[UIColor blackColor]];
     [_tweetLabel setDelegate:self];
-    [_tweetLabel setText:@"Hi. This is a new tool for @you! Developed by->@SebThiebaud for #iPhone #ObjC... ;-)\nMy GitHub page: https://t.co/pQXDoiYA"];
+    //[_tweetLabel setText:@"Hi. This is a new tool for @you! Developed by->@SebThiebaud for #iPhone #ObjC... ;-)\nMy GitHub page: https://t.co/pQXDoiYA"];
+    //[_tweetLabel setText:@"This is  a test\n :D "];
+    [_tweetLabel setText:@"AAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBAAAAAAAAAAAAAAAAAAAAAA"];
+    //[_tweetLabel setBackgroundColor:[UIColor redColor]]; //make background visible :P
     [self.view addSubview:_tweetLabel];
 }
 

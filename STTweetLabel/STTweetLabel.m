@@ -18,11 +18,13 @@
         [self setBackgroundColor:[UIColor clearColor]];
         [self setUserInteractionEnabled:YES];
         [self setNumberOfLines:0];
-        [self setLineBreakMode:NSLineBreakByWordWrapping];
+        [self setLineBreakMode:NSLineBreakByWordWrapping]; // why do we even set a line break mode?
         
         // Alloc and init the arrays which stock the touchable words and their location
         touchLocations = [[NSMutableArray alloc] init];
         touchWords = [[NSMutableArray alloc] init];
+        substringsFromString = [[NSMutableArray alloc] init];
+        widthOfSubstringsFromString = [[NSMutableArray alloc] init];
         
         // Init touchable words colors
         _colorHashtag = [UIColor colorWithWhite:170.0/255.0 alpha:1.0];
@@ -45,6 +47,8 @@
     
     [touchLocations removeAllObjects];
     [touchWords removeAllObjects];
+    [substringsFromString removeAllObjects];
+    [widthOfSubstringsFromString removeAllObjects];
     
     // Separate words by spaces and lines
     NSArray *words = [[self htmlToText:self.text] componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
@@ -60,12 +64,131 @@
     NSError *error;
     NSRegularExpression *regex = [NSRegularExpression regularExpressionWithPattern:@"((@|#)([A-Z0-9a-z(é|ë|ê|è|à|â|ä|á|ù|ü|û|ú|ì|ï|î|í)_]+))|(http(s)?://([A-Z0-9a-z._-]*(/)?)*)" options:NSRegularExpressionCaseInsensitive error:&error];
 
-    // Regex to catch newline
+    // Regex to catch newline d
     NSRegularExpression *regexNewLine = [NSRegularExpression regularExpressionWithPattern:@">newLine" options:NSRegularExpressionCaseInsensitive error:&error];
     
     for (NSString *word in words)
     {
         CGSize sizeWord = [word sizeWithFont:self.font];
+        
+        // Check if it's even possible to put the word in a single line
+        if (sizeWord.width > rect.size.width) {
+            [self workWithString:word atPoint:drawPoint];
+            while ([[widthOfSubstringsFromString lastObject] CGSizeValue].width > rect.size.width) {
+                CGPoint pseudoNewLineDrawPoint = CGPointMake(0.0, drawPoint.y + sizeWord.height);
+                NSString *string = [substringsFromString lastObject];
+                [substringsFromString removeLastObject];
+                [widthOfSubstringsFromString removeLastObject];
+                [self workWithString:string atPoint:pseudoNewLineDrawPoint];
+            }
+            
+            //NSLog(@"Needed amount of lines: %i",[widthOfSubstringsFromString count]);
+            //NSLog(@"Lines: %@",substringsFromString);
+            //what we have:
+            // substringsFromString:
+            // - 1.object: text for first line
+            // - 2.object: text for lines between
+            // - 3.object: text for last line
+            
+            // Should be something like that
+            /*            NSTextCheckingResult *match = [regex firstMatchInString:word options:0 range:NSMakeRange(0, [word length])];
+             NSTextCheckingResult *match2 = [regex firstMatchInString:word options:0 range:NSMakeRange(0, [[substringsFromString objectAtIndex:0] length])];
+             NSTextCheckingResult *match3 = [regex firstMatchInString:word options:0 range:NSMakeRange(0, [[substringsFromString lastObject] length])];
+             
+             // Dissolve the word (for example a hashtag: #youtube!, we want only #youtube)
+             NSString *preCharacters = [word substringToIndex:match.range.location];
+             NSString *wordCharacters = [word substringWithRange:match.range];
+             NSString *postCharacters = [word substringFromIndex:match.range.location + match.range.length];
+             
+             NSString *preCharacters2 = [[substringsFromString objectAtIndex:0] substringToIndex:match2.range.location];
+             NSString *wordCharacters2 = [[substringsFromString objectAtIndex:0] substringWithRange:match2.range];
+             NSString *postCharacters2 = [[substringsFromString lastObject] substringFromIndex:match3.range.location + match3.range.length];
+             
+             
+             // Draw the prefix of the word (if it has a prefix)
+             if (![preCharacters2 isEqualToString:@""])
+             {
+             [self.textColor set];
+             CGSize sizePreCharacters = [preCharacters2 sizeWithFont:self.font];
+             [preCharacters2 drawAtPoint:drawPoint withFont:self.font];
+             drawPoint = CGPointMake(drawPoint.x + sizePreCharacters.width, drawPoint.y);
+             }
+             
+             // Draw the touchable word
+             if (![wordCharacters2 isEqualToString:@""])
+             {
+             // Set the color for mention/hashtag OR weblink
+             if ([wordCharacters2 hasPrefix:@"#"] || [wordCharacters2 hasPrefix:@"@"])
+             {
+             [_colorHashtag set];
+             }
+             else if ([wordCharacters2 hasPrefix:@"http"])
+             {
+             [_colorLink set];
+             }
+             
+             CGSize sizeWordCharacters = [wordCharacters2 sizeWithFont:self.font];
+             [wordCharacters2 drawAtPoint:drawPoint withFont:self.font];
+             
+             // Stock the touchable zone
+             [touchWords addObject:wordCharacters];
+             [touchLocations addObject:[NSValue valueWithCGRect:CGRectMake(drawPoint.x, drawPoint.y, sizeWordCharacters.width, sizeWordCharacters.height)]];
+             
+             drawPoint = CGPointMake(0.0, drawPoint.y + sizeWordCharacters.height);
+             
+             
+             NSMutableArray *strings = [NSMutableArray arrayWithArray:substringsFromString];
+             [strings removeLastObject];
+             [strings removeObjectAtIndex:0];
+             
+             for(int x=0;x<[strings count];x++) {
+             CGSize sizeWordCharacters = [[strings objectAtIndex:x] sizeWithFont:self.font];
+             [[strings objectAtIndex:x] drawAtPoint:drawPoint withFont:self.font];
+             
+             [touchWords addObject:wordCharacters];
+             [touchLocations addObject:[NSValue valueWithCGRect:CGRectMake(drawPoint.x, drawPoint.y, sizeWordCharacters.width, sizeWordCharacters.height)]];
+             
+             drawPoint = CGPointMake(0.0, drawPoint.y + sizeWordCharacters.height);
+             }
+             
+             [substringsFromString removeAllObjects]; //important!
+             [widthOfSubstringsFromString removeAllObjects]; //important!
+             
+             CGSize sizeWordCharacters3 = [[substringsFromString lastObject] sizeWithFont:self.font];
+             [[substringsFromString lastObject] drawAtPoint:drawPoint withFont:self.font];
+             
+             // Stock the touchable zone
+             [touchWords addObject:wordCharacters];
+             [touchLocations addObject:[NSValue valueWithCGRect:CGRectMake(drawPoint.x, drawPoint.y, sizeWordCharacters3.width, sizeWordCharacters3.height)]];
+             
+             drawPoint = CGPointMake(drawPoint.x + sizeWordCharacters3.width, drawPoint.y);
+             }
+             if (![postCharacters2 isEqualToString:@""])
+             {
+             [self.textColor set];
+             
+             NSTextCheckingResult *matchNewLine = [regexNewLine firstMatchInString:postCharacters2 options:0 range:NSMakeRange(0, [postCharacters2 length])];
+             
+             // If a newline is match
+             if (matchNewLine)
+             {
+             [[postCharacters substringToIndex:matchNewLine.range.location] drawAtPoint:drawPoint withFont:self.font];
+             drawPoint = CGPointMake(0.0, drawPoint.y + sizeWord.height);
+             [[postCharacters substringFromIndex:matchNewLine.range.location + matchNewLine.range.length] drawAtPoint:drawPoint withFont:self.font];
+             drawPoint = CGPointMake(drawPoint.x + [[postCharacters substringFromIndex:matchNewLine.range.location + matchNewLine.range.length] sizeWithFont:self.font].width, drawPoint.y);
+             }
+             else
+             {
+             CGSize sizePostCharacters = [postCharacters2 sizeWithFont:self.font];
+             [postCharacters2 drawAtPoint:drawPoint withFont:self.font];
+             drawPoint = CGPointMake(drawPoint.x + sizePostCharacters.width, drawPoint.y);
+             }
+             }
+             
+             drawPoint = CGPointMake(drawPoint.x + sizeSpace.width, drawPoint.y);*/
+
+            
+        } else {
         
         // Test if the new word must be in a new line
         if (drawPoint.x + sizeWord.width > rect.size.width)
@@ -137,8 +260,9 @@
         
         drawPoint = CGPointMake(drawPoint.x + sizeSpace.width, drawPoint.y);
     }
+    }
 }
-    
+
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
     UITouch *touch = event.allTouches.anyObject;
@@ -189,17 +313,35 @@
     htmlString = [htmlString stringByReplacingOccurrencesOfString:@"&#039;"  withString:@"'"];
     
     // Newline character (if you have a better idea...)
-    //first CR LF
+    // first CR LF :)
     htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\r\n"  withString:@" >newLine"];
-    //LF
+    // LF
     htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\n"  withString:@" >newLine"];
-    //CR
+    // CR
     htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\r"  withString:@" >newLine"];
    
     // Extras
     htmlString = [htmlString stringByReplacingOccurrencesOfString:@"<3" withString:@"♥"];
     
     return htmlString;
+}
+
+// Split it into two strings (string 1: first line, string 2: the other line[s])
+- (void)workWithString:(NSString *)word atPoint:(CGPoint)drawPoint {
+    NSString *substring;
+    for (int i=1; i<[word length]; i++) {
+        substring = [word substringToIndex:[word length] - i];
+        CGSize sizeSubstring = [substring sizeWithFont:self.font];
+        if (drawPoint.x + sizeSubstring.width <= self.frame.size.width) {            
+            NSString *substring2 = [word substringFromIndex:[substring length]];
+            CGSize sizeSubstring2 = [substring2 sizeWithFont:self.font];
+            [substringsFromString addObject:substring];
+            [widthOfSubstringsFromString addObject:[NSValue valueWithCGSize:sizeSubstring]];
+            [substringsFromString addObject:substring2];
+            [widthOfSubstringsFromString addObject:[NSValue valueWithCGSize:sizeSubstring2]];           
+            break;
+        }
+    }
 }
 
 @end
