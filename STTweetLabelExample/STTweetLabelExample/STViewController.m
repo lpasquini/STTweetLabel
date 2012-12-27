@@ -36,7 +36,7 @@
     [_tweetLabel setDelegate:self];
     //[_tweetLabel setText:@"Hi. This is a new tool for @you! Developed by->@SebThiebaud for #iPhone #ObjC... ;-)\nMy GitHub page: https://t.co/pQXDoiYA"];
     //[_tweetLabel setText:@"This is  a test\n :D "];
-    [_tweetLabel setText:@"AAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBAAAAAAAAAAAAAAAAAAAAAABBBBBBBBBBBBBBBBBBBBBBAAAAAAAAAAAAAAAAAAAAAA"];
+    [_tweetLabel setText:@"ABC\n\nDEF bla\nbla"];
     //[_tweetLabel setBackgroundColor:[UIColor redColor]]; //make background visible :P
     [self.view addSubview:_tweetLabel];
 }

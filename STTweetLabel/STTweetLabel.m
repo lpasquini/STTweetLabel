@@ -67,6 +67,7 @@
     // Regex to catch newline d
     NSRegularExpression *regexNewLine = [NSRegularExpression regularExpressionWithPattern:@">newLine" options:NSRegularExpressionCaseInsensitive error:&error];
     
+    NSLog(@"%@",words);
     for (NSString *word in words)
     {
         CGSize sizeWord = [word sizeWithFont:self.font];
@@ -186,80 +187,85 @@
              }
              
              drawPoint = CGPointMake(drawPoint.x + sizeSpace.width, drawPoint.y);*/
-
             
         } else {
-        
-        // Test if the new word must be in a new line
-        if (drawPoint.x + sizeWord.width > rect.size.width)
-        {
-            drawPoint = CGPointMake(0.0, drawPoint.y + sizeWord.height);
-        }
-                
-        NSTextCheckingResult *match = [regex firstMatchInString:word options:0 range:NSMakeRange(0, [word length])];
-        
-        // Dissolve the word (for example a hashtag: #youtube!, we want only #youtube)
-        NSString *preCharacters = [word substringToIndex:match.range.location];
-        NSString *wordCharacters = [word substringWithRange:match.range];
-        NSString *postCharacters = [word substringFromIndex:match.range.location + match.range.length];
-        
-        // Draw the prefix of the word (if it has a prefix)
-        if (![preCharacters isEqualToString:@""])
-        {
-            [self.textColor set];
-            CGSize sizePreCharacters = [preCharacters sizeWithFont:self.font];
-            [preCharacters drawAtPoint:drawPoint withFont:self.font];
-            drawPoint = CGPointMake(drawPoint.x + sizePreCharacters.width, drawPoint.y);
-        }
-        
-        // Draw the touchable word
-        if (![wordCharacters isEqualToString:@""])
-        {
-            // Set the color for mention/hashtag OR weblink
-            if ([wordCharacters hasPrefix:@"#"] || [wordCharacters hasPrefix:@"@"])
+            
+            // Test if the new word must be in a new line
+            if (drawPoint.x + sizeWord.width > rect.size.width)
             {
-                [_colorHashtag set];
-            }
-            else if ([wordCharacters hasPrefix:@"http"])
-            {
-                [_colorLink set];
-            }
-            
-            CGSize sizeWordCharacters = [wordCharacters sizeWithFont:self.font];
-            [wordCharacters drawAtPoint:drawPoint withFont:self.font];
-            
-            // Stock the touchable zone
-            [touchWords addObject:wordCharacters];
-            [touchLocations addObject:[NSValue valueWithCGRect:CGRectMake(drawPoint.x, drawPoint.y, sizeWordCharacters.width, sizeWordCharacters.height)]];
-            
-            drawPoint = CGPointMake(drawPoint.x + sizeWordCharacters.width, drawPoint.y);
-        }
-        
-        // Draw the suffix of the word (if it has a suffix) else the word is not touchable
-        if (![postCharacters isEqualToString:@""])
-        {
-            [self.textColor set];
-            
-            NSTextCheckingResult *matchNewLine = [regexNewLine firstMatchInString:postCharacters options:0 range:NSMakeRange(0, [postCharacters length])];
-
-            // If a newline is match
-            if (matchNewLine)
-            {
-                [[postCharacters substringToIndex:matchNewLine.range.location] drawAtPoint:drawPoint withFont:self.font];
                 drawPoint = CGPointMake(0.0, drawPoint.y + sizeWord.height);
-                [[postCharacters substringFromIndex:matchNewLine.range.location + matchNewLine.range.length] drawAtPoint:drawPoint withFont:self.font];
-                drawPoint = CGPointMake(drawPoint.x + [[postCharacters substringFromIndex:matchNewLine.range.location + matchNewLine.range.length] sizeWithFont:self.font].width, drawPoint.y);
             }
-            else
+                    
+            NSTextCheckingResult *match = [regex firstMatchInString:word options:0 range:NSMakeRange(0, [word length])];
+            
+            // Dissolve the word (for example a hashtag: #youtube!, we want only #youtube)
+            NSString *preCharacters = [word substringToIndex:match.range.location];
+            NSString *wordCharacters = [word substringWithRange:match.range];
+            NSString *postCharacters = [word substringFromIndex:match.range.location + match.range.length];
+            
+            // Draw the prefix of the word (if it has a prefix)
+            if (![preCharacters isEqualToString:@""])
             {
-                CGSize sizePostCharacters = [postCharacters sizeWithFont:self.font];
-                [postCharacters drawAtPoint:drawPoint withFont:self.font];
-                drawPoint = CGPointMake(drawPoint.x + sizePostCharacters.width, drawPoint.y);
+                [self.textColor set];
+                CGSize sizePreCharacters = [preCharacters sizeWithFont:self.font];
+                [preCharacters drawAtPoint:drawPoint withFont:self.font];
+                drawPoint = CGPointMake(drawPoint.x + sizePreCharacters.width, drawPoint.y);
             }
+            
+            // Draw the touchable word
+            if (![wordCharacters isEqualToString:@""])
+            {
+                // Set the color for mention/hashtag OR weblink
+                if ([wordCharacters hasPrefix:@"#"] || [wordCharacters hasPrefix:@"@"])
+                {
+                    [_colorHashtag set];
+                }
+                else if ([wordCharacters hasPrefix:@"http"])
+                {
+                    [_colorLink set];
+                }
+                
+                CGSize sizeWordCharacters = [wordCharacters sizeWithFont:self.font];
+                [wordCharacters drawAtPoint:drawPoint withFont:self.font];
+                
+                // Stock the touchable zone
+                [touchWords addObject:wordCharacters];
+                [touchLocations addObject:[NSValue valueWithCGRect:CGRectMake(drawPoint.x, drawPoint.y, sizeWordCharacters.width, sizeWordCharacters.height)]];
+                
+                drawPoint = CGPointMake(drawPoint.x + sizeWordCharacters.width, drawPoint.y);
+            }
+            
+            // Draw the suffix of the word (if it has a suffix) else the word is not touchable
+            if (![postCharacters isEqualToString:@""])
+            {
+                //NSLog(@"postCharacters: %@",postCharacters);
+                
+                [self.textColor set];
+                
+                NSTextCheckingResult *matchNewLine = [regexNewLine firstMatchInString:postCharacters options:0 range:NSMakeRange(0, [postCharacters length])];
+                
+                if ([postCharacters isEqualToString:@">newLine"]) {
+                    drawPoint = CGPointMake(0.0, drawPoint.y + sizeWord.height);
+                }
+                else if (matchNewLine) // If a newline is match
+                {
+                    // draw word
+                    [[postCharacters substringToIndex:matchNewLine.range.location] drawAtPoint:drawPoint withFont:self.font];
+                    // go to next line
+                    drawPoint = CGPointMake(0.0, drawPoint.y + sizeWord.height);
+                    //[[postCharacters substringFromIndex:matchNewLine.range.location + matchNewLine.range.length] drawAtPoint:drawPoint withFont:self.font];
+                    //drawPoint = CGPointMake(drawPoint.x + [[postCharacters substringFromIndex:matchNewLine.range.location + matchNewLine.range.length] sizeWithFont:self.font].width, drawPoint.y);
+                }
+                else
+                {
+                    // draw word without newline character and continue
+                    CGSize sizePostCharacters = [postCharacters sizeWithFont:self.font];
+                    [postCharacters drawAtPoint:drawPoint withFont:self.font];
+                    drawPoint = CGPointMake(drawPoint.x + sizePostCharacters.width + sizeSpace.width, drawPoint.y);
+                }
+            }
+            //drawPoint = CGPointMake(drawPoint.x + sizeSpace.width, drawPoint.y);
         }
-        
-        drawPoint = CGPointMake(drawPoint.x + sizeSpace.width, drawPoint.y);
-    }
     }
 }
 
@@ -314,11 +320,11 @@
     
     // Newline character (if you have a better idea...)
     // first CR LF :)
-    htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\r\n"  withString:@" >newLine"];
+    htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\r\n"  withString:@">newLine "];
     // LF
-    htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\n"  withString:@" >newLine"];
+    htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\n"  withString:@">newLine "];
     // CR
-    htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\r"  withString:@" >newLine"];
+    htmlString = [htmlString stringByReplacingOccurrencesOfString:@"\r"  withString:@">newLine "];
    
     // Extras
     htmlString = [htmlString stringByReplacingOccurrencesOfString:@"<3" withString:@"♥"];
